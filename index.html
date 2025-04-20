@@ -5,6 +5,7 @@
   <title>Air Quality Monitoring Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
   <style>
     :root {
       --primary-color: #3498db;
@@ -83,6 +84,15 @@
     .aqi-unhealthy { background-color: rgba(231, 128, 60, 0.1); }
     .aqi-very-unhealthy { background-color: rgba(231, 123, 99, 0.1); }
     .aqi-hazardous { background-color: rgba(157, 149, 166, 0.1); }
+
+    .analysis-section {
+      margin-top: 2rem;
+    }
+
+    .chart-container {
+      height: 300px;
+      margin-bottom: 2rem;
+    }
   </style>
 </head>
 <body>
@@ -149,6 +159,49 @@
         </div>
       </div>
     </div>
+
+    <!-- Additional Analysis Graphs -->
+    <div class="analysis-section">
+      <h2 class="text-center mb-4">Air Quality Analysis</h2>
+
+      <div class="row">
+        <!-- Scatter Plot: PM2.5 vs Sound -->
+        <div class="col-lg-6 mb-4">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">PM2.5 vs Sound Level</h5>
+            </div>
+            <div class="card-body chart-container">
+              <canvas id="pm25SoundChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scatter Plot: PM10 vs Sound -->
+        <div class="col-lg-6 mb-4">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">PM10 vs Sound Level</h5>
+            </div>
+            <div class="card-body chart-container">
+              <canvas id="pm10SoundChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pie Chart: AQI Distribution -->
+        <div class="col-lg-6 col-md-8 mx-auto mb-4">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">AQI Distribution</h5>
+            </div>
+            <div class="card-body chart-container">
+              <canvas id="aqiPieChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <footer class="py-3 mt-5 border-top">
@@ -158,9 +211,22 @@
   </footer>
 
   <script>
+    // Register Chart.js plugins
+    Chart.register(ChartDataLabels);
+
     const API_BASE_URL = 'http://127.0.0.1:8080/air-quality-api/v1';
     const ctx = document.getElementById('historyChart').getContext('2d');
     let chart, dustData = [], projectData = [], currentMetric = 'aqi';
+    let pm25SoundChart, pm10SoundChart, aqiPieChart;
+
+    // AQI Categories for Pie Chart
+    const aqiCategories = {
+      'Good(1)': { range: [1, 2], color: 'rgba(46, 204, 113, 0.7)' },
+      'Moderate(2)': { range: [2, 3], color: 'rgba(241, 196, 15, 0.7)' },
+      'Unhealthy for Sensitive Groups(3)': { range: [3, 4], color: 'rgba(230, 126, 34, 0.7)' },
+      'Unhealthy(4)': { range: [4, 5], color: 'rgba(231, 76, 60, 0.7)' },
+      'Very Unhealthy(5)': { range: [5, 6], color: 'rgba(142, 68, 173, 0.7)' },
+    };
 
     // Show time
     function updateCurrentTime() {
@@ -179,8 +245,7 @@
       else if (aqi <= 2) { card.classList.add('aqi-moderate'); status.textContent = 'Moderate'; }
       else if (aqi <= 3) { card.classList.add('aqi-unhealthy-sensitive'); status.textContent = 'Unhealthy for Sensitive Groups'; }
       else if (aqi <= 4) { card.classList.add('aqi-unhealthy'); status.textContent = 'Unhealthy'; }
-      else if (aqi <= 5) { card.classList.add('aqi-very-unhealthy'); status.textContent = 'Very Unhealthy'; }
-      else { card.classList.add('aqi-hazardous'); status.textContent = 'Hazardous'; }
+      else { card.classList.add('aqi-very-unhealthy'); status.textContent = 'Very Unhealthy'; }
     }
 
     async function fetchAllData() {
@@ -206,6 +271,8 @@
         document.getElementById('soundValue').textContent = avgSound.toFixed(1);
         updateChart();
         renderTable();
+        updateScatterCharts();
+        updateAqiPieChart();
         status.classList.replace('bg-danger', 'bg-success');
         text.textContent = 'Connected';
       } catch (err) {
@@ -244,33 +311,228 @@
         options: {
           scales: { y: { beginAtZero: true } },
           responsive: true,
+          plugins: {
+            datalabels: {
+              display: false // Disable datalabels for line chart
+            }
+          }
+        }
+      });
+    }
+
+    function updateScatterCharts() {
+      if (!dustData.length || !projectData.length) return;
+
+      // Combine the data for analysis
+      const combinedData = dustData.map((dust, i) => {
+        const project = projectData[i] || {};
+        return {
+          pm25: dust.pm25,
+          pm10: dust.pm10,
+          sound: project.sound || 0
+        };
+      }).filter(d => d.sound > 0); // Filter out entries with no sound data
+
+      // PM2.5 vs Sound Scatter Plot
+      const pm25SoundCtx = document.getElementById('pm25SoundChart').getContext('2d');
+      if (pm25SoundChart) pm25SoundChart.destroy();
+      pm25SoundChart = new Chart(pm25SoundCtx, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'PM2.5 vs Sound Level',
+            data: combinedData.map(d => ({ x: d.sound, y: d.pm25 })),
+            backgroundColor: 'rgba(231, 76, 60, 0.7)',
+            borderColor: 'rgba(192, 57, 43, 1.0)',
+            pointRadius: 6,
+            pointHoverRadius: 8
+          }]
+        },
+        options: {
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Sound Level (dB)'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'PM2.5 (µg/m³)'
+              },
+              beginAtZero: true
+            }
+          },
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            datalabels: {
+              display: false // Disable datalabels for scatter charts
+            }
+          }
+        }
+      });
+
+      // PM10 vs Sound Scatter Plot
+      const pm10SoundCtx = document.getElementById('pm10SoundChart').getContext('2d');
+      if (pm10SoundChart) pm10SoundChart.destroy();
+      pm10SoundChart = new Chart(pm10SoundCtx, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'PM10 vs Sound Level',
+            data: combinedData.map(d => ({ x: d.sound, y: d.pm10 })),
+            backgroundColor: 'rgba(241, 196, 15, 0.7)',
+            borderColor: 'rgba(243, 156, 18, 1.0)',
+            pointRadius: 6,
+            pointHoverRadius: 8
+          }]
+        },
+        options: {
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Sound Level (dB)'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'PM10 (µg/m³)'
+              },
+              beginAtZero: true
+            }
+          },
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            datalabels: {
+              display: false // Disable datalabels for scatter charts
+            }
+          }
+        }
+      });
+    }
+
+    function updateAqiPieChart() {
+      if (!dustData.length) return;
+
+      // Count AQI values by category
+      const aqiDistribution = {};
+
+      // Initialize all categories with zero
+      Object.keys(aqiCategories).forEach(category => {
+        aqiDistribution[category] = 0;
+      });
+
+      // Count AQI values
+      dustData.forEach(d => {
+        const aqi = parseFloat(d.aqi);
+        for (const [category, details] of Object.entries(aqiCategories)) {
+          if (aqi >= details.range[0] && aqi < details.range[1]) {
+            aqiDistribution[category]++;
+            break;
+          }
+        }
+      });
+
+      // Create pie chart
+      const aqiPieCtx = document.getElementById('aqiPieChart').getContext('2d');
+      if (aqiPieChart) aqiPieChart.destroy();
+
+      const categories = Object.keys(aqiDistribution);
+      const counts = Object.values(aqiDistribution);
+      const colors = categories.map(category => aqiCategories[category].color);
+
+      // Calculate percentages for each category
+      const total = counts.reduce((sum, count) => sum + count, 0);
+      const percentages = counts.map(count => Math.round((count / total) * 100));
+
+      aqiPieChart = new Chart(aqiPieCtx, {
+        type: 'pie',
+        data: {
+          labels: categories,
+          datasets: [{
+            data: counts,
+            backgroundColor: colors,
+            borderColor: 'white',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: {
+                padding: 20,
+                font: {
+                  size: 12
+                }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.raw;
+                  const percentage = Math.round((value / total) * 100);
+                  return `${label}: ${value} (${percentage}%)`;
+                }
+              }
+            },
+            datalabels: {
+              formatter: (value, ctx) => {
+                const dataset = ctx.chart.data.datasets[0];
+                const sum = dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = Math.round((value / sum) * 100);
+                return percentage + '%';
+              },
+              color: '#fff',
+              font: {
+                weight: 'bold',
+                size: 14
+              },
+              textStrokeColor: '#000',
+              textStrokeWidth: 1,
+              // Only display percentage if it's 5% or more
+              display: function(context) {
+                const dataset = context.chart.data.datasets[0];
+                const sum = dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = Math.round((context.dataset.data[context.dataIndex] / sum) * 100);
+                return percentage >= 5;
+              }
+            }
+          }
         }
       });
     }
 
     function renderTable() {
-    const tbody = document.getElementById('recentData');
-    tbody.innerHTML = '';
+      const tbody = document.getElementById('recentData');
+      tbody.innerHTML = '';
 
-    // Combine and sort by descending date
-    const combined = dustData.map((d, i) => ({ dust: d, project: projectData[i] }));
-    combined.sort((a, b) => new Date(b.dust.created) - new Date(a.dust.created));
+      // Combine and sort by descending date
+      const combined = dustData.map((d, i) => ({ dust: d, project: projectData[i] }));
+      combined.sort((a, b) => new Date(b.dust.created) - new Date(a.dust.created));
 
-    const len = Math.min(combined.length, 20);
-    for (let i = 0; i < len; i++) {
-      const d = combined[i].dust, p = combined[i].project;
-      const tr = `<tr>
-        <td>${new Date(d.created).toLocaleString()}</td>
-        <td>${d.pm25}</td>
-        <td>${d.pm10}</td>
-        <td>${d.aqi}</td>
-        <td>${p.sound}</td>
-        <td>(${d.lat}, ${d.lon})</td>
-      </tr>`;
-      tbody.insertAdjacentHTML('beforeend', tr);
+      const len = Math.min(combined.length, 20);
+      for (let i = 0; i < len; i++) {
+        const d = combined[i].dust, p = combined[i].project;
+        const tr = `<tr>
+          <td>${new Date(d.created).toLocaleString()}</td>
+          <td>${d.pm25}</td>
+          <td>${d.pm10}</td>
+          <td>${d.aqi}</td>
+          <td>${p.sound}</td>
+          <td>(${d.lat}, ${d.lon})</td>
+        </tr>`;
+        tbody.insertAdjacentHTML('beforeend', tr);
+      }
     }
-  }
-
 
     document.getElementById('refreshBtn').addEventListener('click', fetchAllData);
     document.getElementById('metricSelect').addEventListener('change', e => {
