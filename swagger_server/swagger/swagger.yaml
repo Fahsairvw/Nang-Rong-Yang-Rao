@@ -1,0 +1,153 @@
+openapi: 3.0.0
+info:
+  title: Air Quality Monitoring API
+  description: "This API provides real-time and historical air quality data including\
+    \ PM2.5, PM10, AQI, \nsound levels, and location information.\n"
+  version: 1.0.0
+servers:
+- url: http://127.0.0.1:8080/air-quality-api/v1
+paths:
+  /projects:
+    get:
+      summary: Returns a list of projects.
+      operationId: controller_get_projects
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+                x-content-type: application/json
+      x-openapi-router-controller: swagger_server.controllers.default_controller
+  /projects/{projectId}:
+    get:
+      summary: Returns details of the specified project.
+      operationId: controller_get_project_details
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+      x-openapi-router-controller: swagger_server.controllers.default_controller
+  /dust:
+    get:
+      summary: Returns all dust data entries.
+      operationId: controller_get_dust_data
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Dust"
+                x-content-type: application/json
+      x-openapi-router-controller: swagger_server.controllers.default_controller
+  /dust/{dustId}:
+    get:
+      summary: Returns details of a specific dust entry.
+      operationId: controller_get_dust_entry
+      parameters:
+      - name: dustId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dust"
+      x-openapi-router-controller: swagger_server.controllers.default_controller
+  /dust/average:
+    get:
+      summary: "Returns average PM2.5, PM10, and AQI over all recorded entries."
+      operationId: controller_get_dust_average
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DustAverage"
+      x-openapi-router-controller: swagger_server.controllers.default_controller
+components:
+  schemas:
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        lat:
+          type: integer
+        lon:
+          type: integer
+        sound:
+          type: integer
+        created:
+          type: string
+          format: date-time
+      example:
+        created: 2000-01-23T04:56:07.000+00:00
+        sound: 5
+        lon: 1
+        id: 0
+        lat: 6
+    Dust:
+      type: object
+      properties:
+        id:
+          type: integer
+        created:
+          type: string
+          format: date-time
+        pm25:
+          type: number
+        pm10:
+          type: number
+        aqi:
+          type: integer
+        lat:
+          type: number
+        lon:
+          type: number
+      example:
+        pm25: 6.02745618307040320615897144307382404804229736328125
+        created: 2000-01-23T04:56:07.000+00:00
+        pm10: 1.46581298050294517310021547018550336360931396484375
+        aqi: 5
+        lon: 2.3021358869347654518833223846741020679473876953125
+        id: 0
+        lat: 5.63737665663332876420099637471139430999755859375
+    DustAverage:
+      type: object
+      properties:
+        average_pm25:
+          type: number
+        average_pm10:
+          type: number
+        average_aqi:
+          type: number
+      example:
+        average_aqi: 1.46581298050294517310021547018550336360931396484375
+        average_pm10: 6.02745618307040320615897144307382404804229736328125
+        average_pm25: 0.80082819046101150206595775671303272247314453125
+

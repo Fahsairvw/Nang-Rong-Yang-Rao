@@ -1,0 +1,132 @@
+openapi: 3.0.0
+info:
+  title: Air Quality Monitoring API
+  description: |
+    This API provides real-time and historical air quality data including PM2.5, PM10, AQI, 
+    sound levels, and location information.
+  version: 1.0.0
+servers:
+  - url: http://127.0.0.1:8080/air-quality-api/v1
+
+paths:
+  /projects:
+    get:
+      summary: Returns a list of projects.
+      operationId: controller.get_projects
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+
+  /projects/{projectId}:
+    parameters:
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Returns details of the specified project.
+      operationId: controller.get_project_details
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+  /dust:
+    get:
+      summary: Returns all dust data entries.
+      operationId: controller.get_dust_data
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Dust'
+
+  /dust/{dustId}:
+    parameters:
+      - name: dustId
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Returns details of a specific dust entry.
+      operationId: controller.get_dust_entry
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dust'
+
+  /dust/average:
+    get:
+      summary: Returns average PM2.5, PM10, and AQI over all recorded entries.
+      operationId: controller.get_dust_average
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DustAverage'
+
+components:
+  schemas:
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        lat:
+          type: integer
+        lon:
+          type: integer
+        sound:
+          type: integer
+        created:
+          type: string
+          format: date-time
+
+    Dust:
+      type: object
+      properties:
+        id:
+          type: integer
+        created:
+          type: string
+          format: date-time
+        pm25:
+          type: number
+        pm10:
+          type: number
+        aqi:
+          type: integer
+        lat:
+          type: number
+        lon:
+          type: number
+
+    DustAverage:
+      type: object
+      properties:
+        average_pm25:
+          type: number
+        average_pm10:
+          type: number
+        average_aqi:
+          type: number

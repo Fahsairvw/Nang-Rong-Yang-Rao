@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Air Quality Monitoring Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary-color: #3498db;
+      --secondary-color: #2ecc71;
+      --danger-color: #e74c3c;
+      --warning-color: #f39c12;
+      --dark-color: #2c3e50;
+      --light-color: #ecf0f1;
+    }
+
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+      max-width: 1400px;
+    }
+
+    h2 {
+      color: var(--dark-color);
+      font-weight: 600;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--primary-color);
+      display: inline-block;
+    }
+
+    .metric-card {
+      transition: all 0.3s ease;
+      border-radius: 10px;
+      border: none;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      background: white;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-title {
+      color: var(--dark-color);
+      font-weight: 500;
+    }
+
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 5px;
+    }
+
+    #pm25Value { color: var(--danger-color); }
+    #pm10Value { color: var(--warning-color); }
+    #aqiValue { color: var(--primary-color); }
+    #soundValue { color: var(--secondary-color); }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      border-top-color: var(--primary-color);
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .aqi-good { background-color: rgba(46, 204, 113, 0.1); }
+    .aqi-moderate { background-color: rgba(241, 196, 15, 0.1); }
+    .aqi-unhealthy { background-color: rgba(231, 128, 60, 0.1); }
+    .aqi-very-unhealthy { background-color: rgba(231, 123, 99, 0.1); }
+    .aqi-hazardous { background-color: rgba(157, 149, 166, 0.1); }
+  </style>
+</head>
+<body>
+  <header class="py-3 mb-4 border-bottom">
+    <div class="container d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-cloud-sun me-2" viewBox="0 0 16 16">
+          <path d="M7 8a3.5 3.5 0 0 1 3.5 3.555.5.5 0 0 0 .624.492A1.503 1.503 0 0 1 13 13.5a1.5 1.5 0 0 1-1.5 1.5H3a2 2 0 1 1 .1-3.998.5.5 0 0 0 .51-.375A3.502 3.502 0 0 1 7 8z"/>
+          <path d="M10.5 1.5a.5.5 0 0 0-1 0v1a.5.5 0 0 0 1 0v-1zM14.5 6.5a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1z"/>
+        </svg>
+        <span class="fs-4 fw-bold" style="color: var(--dark-color);">AirQuality Monitor</span>
+      </div>
+      <div id="current-time" class="text-muted"></div>
+    </div>
+  </header>
+
+  <div class="container my-5">
+    <h2 class="text-center mb-4">Air Quality Monitoring Dashboard</h2>
+
+    <div class="text-end mb-3">
+      <span class="status-indicator bg-success" id="connectionStatus"></span>
+      <span id="connectionText">Connected</span>
+    </div>
+
+    <!-- Metrics Cards -->
+    <div class="row mb-4">
+      <div class="col-md-3"><div class="card metric-card"><div class="card-body text-center"><h5 class="card-title">PM2.5</h5><h3 id="pm25Value">--</h3><p class="text-muted">µg/m³</p></div></div></div>
+      <div class="col-md-3"><div class="card metric-card"><div class="card-body text-center"><h5 class="card-title">PM10</h5><h3 id="pm10Value">--</h3><p class="text-muted">µg/m³</p></div></div></div>
+      <div class="col-md-3"><div class="card metric-card" id="aqiCard"><div class="card-body text-center"><h5 class="card-title">AQI</h5><h3 id="aqiValue">--</h3><p class="text-muted">Index</p><small id="aqiStatusText">--</small></div></div></div>
+      <div class="col-md-3"><div class="card metric-card"><div class="card-body text-center"><h5 class="card-title">Sound</h5><h3 id="soundValue">--</h3><p class="text-muted">dB</p></div></div></div>
+    </div>
+
+    <!-- Chart Selector -->
+    <div class="row mb-4">
+      <div class="col-md-6 offset-md-3">
+        <label for="metricSelect" class="form-label">Select Metric</label>
+        <select id="metricSelect" class="form-select">
+          <option value="aqi" selected>AQI</option>
+          <option value="pm25">PM2.5</option>
+          <option value="pm10">PM10</option>
+          <option value="sound">Sound</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="card mb-4"><div class="card-body"><canvas id="historyChart" height="100"></canvas></div></div>
+
+    <!-- Data Table -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Recent Measurements</h5>
+        <button id="refreshBtn" class="btn btn-sm btn-outline-primary">
+          <span id="refreshText">Refresh Data</span>
+          <span id="refreshSpinner" class="loading-spinner d-none"></span>
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead><tr><th>Time</th><th>PM2.5</th><th>PM10</th><th>AQI</th><th>Sound (dB)</th><th>Location</th></tr></thead>
+            <tbody id="recentData"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="py-3 mt-5 border-top">
+    <div class="container text-center text-muted">
+      <small>Air Quality Monitoring Dashboard &copy; 2025 | Real-time environmental data visualization</small>
+    </div>
+  </footer>
+
+  <script>
+    const API_BASE_URL = 'http://127.0.0.1:8080/air-quality-api/v1';
+    const ctx = document.getElementById('historyChart').getContext('2d');
+    let chart, dustData = [], projectData = [], currentMetric = 'aqi';
+
+    // Show time
+    function updateCurrentTime() {
+      const now = new Date();
+      document.getElementById('current-time').textContent = now.toLocaleString();
+    }
+    setInterval(updateCurrentTime, 1000); updateCurrentTime();
+
+    function updateAqiStatus(aqi) {
+      const card = document.getElementById('aqiCard');
+      const status = document.getElementById('aqiStatusText');
+      card.className = 'card metric-card';
+      if (!aqi) return status.textContent = '--';
+      aqi = parseFloat(aqi);
+      if (aqi <= 1) { card.classList.add('aqi-good'); status.textContent = 'Good'; }
+      else if (aqi <= 2) { card.classList.add('aqi-moderate'); status.textContent = 'Moderate'; }
+      else if (aqi <= 3) { card.classList.add('aqi-unhealthy-sensitive'); status.textContent = 'Unhealthy for Sensitive Groups'; }
+      else if (aqi <= 4) { card.classList.add('aqi-unhealthy'); status.textContent = 'Unhealthy'; }
+      else if (aqi <= 5) { card.classList.add('aqi-very-unhealthy'); status.textContent = 'Very Unhealthy'; }
+      else { card.classList.add('aqi-hazardous'); status.textContent = 'Hazardous'; }
+    }
+
+    async function fetchAllData() {
+      const status = document.getElementById('connectionStatus');
+      const text = document.getElementById('connectionText');
+      try {
+        document.getElementById('refreshText').classList.add('d-none');
+        document.getElementById('refreshSpinner').classList.remove('d-none');
+        const [dustRes, projRes, avgRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/dust`),
+          fetch(`${API_BASE_URL}/projects`),
+          fetch(`${API_BASE_URL}/dust/average`)
+        ]);
+        dustData = await dustRes.json();
+        projectData = await projRes.json();
+        const avg = await avgRes.json();
+        document.getElementById('pm25Value').textContent = avg.average_pm25?.toFixed(2) || '--';
+        document.getElementById('pm10Value').textContent = avg.average_pm10?.toFixed(2) || '--';
+        document.getElementById('aqiValue').textContent = avg.average_aqi?.toFixed(0) || '--';
+        updateAqiStatus(avg.average_aqi);
+        const valid = projectData.filter(d => d.sound);
+        const avgSound = valid.reduce((s, v) => s + v.sound, 0) / valid.length;
+        document.getElementById('soundValue').textContent = avgSound.toFixed(1);
+        updateChart();
+        renderTable();
+        status.classList.replace('bg-danger', 'bg-success');
+        text.textContent = 'Connected';
+      } catch (err) {
+        status.classList.replace('bg-success', 'bg-danger');
+        text.textContent = 'Disconnected';
+      } finally {
+        document.getElementById('refreshText').classList.remove('d-none');
+        document.getElementById('refreshSpinner').classList.add('d-none');
+      }
+    }
+
+    function updateChart() {
+      let data = [], labels = [];
+      if (currentMetric === 'sound') {
+        data = projectData.map(d => d.sound);
+        labels = projectData.map(d => new Date(d.created).toLocaleTimeString());
+      } else {
+        data = dustData.map(d => d[currentMetric]);
+        labels = dustData.map(d => new Date(d.created).toLocaleTimeString());
+      }
+
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels.slice(-30),
+          datasets: [{
+            label: currentMetric.toUpperCase(),
+            data: data.slice(-30),
+            borderColor: '#3498db',
+            backgroundColor: 'rgba(52, 152, 219, 0.2)',
+            fill: true,
+            tension: 0.2
+          }]
+        },
+        options: {
+          scales: { y: { beginAtZero: true } },
+          responsive: true,
+        }
+      });
+    }
+
+    function renderTable() {
+    const tbody = document.getElementById('recentData');
+    tbody.innerHTML = '';
+
+    // Combine and sort by descending date
+    const combined = dustData.map((d, i) => ({ dust: d, project: projectData[i] }));
+    combined.sort((a, b) => new Date(b.dust.created) - new Date(a.dust.created));
+
+    const len = Math.min(combined.length, 20);
+    for (let i = 0; i < len; i++) {
+      const d = combined[i].dust, p = combined[i].project;
+      const tr = `<tr>
+        <td>${new Date(d.created).toLocaleString()}</td>
+        <td>${d.pm25}</td>
+        <td>${d.pm10}</td>
+        <td>${d.aqi}</td>
+        <td>${p.sound}</td>
+        <td>(${d.lat}, ${d.lon})</td>
+      </tr>`;
+      tbody.insertAdjacentHTML('beforeend', tr);
+    }
+  }
+
+
+    document.getElementById('refreshBtn').addEventListener('click', fetchAllData);
+    document.getElementById('metricSelect').addEventListener('change', e => {
+      currentMetric = e.target.value;
+      updateChart();
+    });
+
+    fetchAllData();
+  </script>
+</body>
+</html>
