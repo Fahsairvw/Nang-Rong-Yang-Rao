@@ -4,7 +4,7 @@
 
 - **Raveewan Santipong** (Fahsairvw) – 6610545928  
   Department of Software and Knowledge Engineering, Kasetsart University  
-- **Yatichapat Dechaeamsakulchai** – 6610545235  
+- **Yatichapat Dechaeamsakulchai** (Yatichapat)– 6610545235  
   Department of Software and Knowledge Engineering, Kasetsart University  
 
 ---
