@@ -1,0 +1,209 @@
+[
+    {
+        "id": "356444956bcd16ce",
+        "type": "tab",
+        "label": "Flow 6",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "7884c625af2de0b8",
+        "type": "mqtt in",
+        "z": "356444956bcd16ce",
+        "name": "",
+        "topic": "b6610545928/sound",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "636c7584198088a9",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 210,
+        "y": 180,
+        "wires": [
+            [
+                "26eb899cd8f06607"
+            ]
+        ]
+    },
+    {
+        "id": "26eb899cd8f06607",
+        "type": "template",
+        "z": "356444956bcd16ce",
+        "name": "",
+        "field": "topic",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "INSERT INTO project (sound, lat, lon) VALUES ({{payload.sound}}, {{payload.lat}}, {{payload.lon}});\n",
+        "output": "str",
+        "x": 420,
+        "y": 180,
+        "wires": [
+            [
+                "cb2988b663f0d7bb"
+            ]
+        ]
+    },
+    {
+        "id": "26ad7ae315aee571",
+        "type": "debug",
+        "z": "356444956bcd16ce",
+        "name": "debug 8",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 720,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "cb2988b663f0d7bb",
+        "type": "mysql",
+        "z": "356444956bcd16ce",
+        "mydb": "e85ec3e42761a378",
+        "name": "",
+        "x": 780,
+        "y": 220,
+        "wires": [
+            [
+                "26ad7ae315aee571"
+            ]
+        ]
+    },
+    {
+        "id": "43e183eedac2b1c5",
+        "type": "http request",
+        "z": "356444956bcd16ce",
+        "name": "",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "http://api.openweathermap.org/data/2.5/air_pollution?lat=13.710654&lon=100.612193&appid=834d414b10037b53063c9bfe19427b16",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 230,
+        "y": 360,
+        "wires": [
+            [
+                "8463063f761be4e1"
+            ]
+        ]
+    },
+    {
+        "id": "91767c4e592a0e63",
+        "type": "inject",
+        "z": "356444956bcd16ce",
+        "name": "start",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "3600",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 90,
+        "y": 420,
+        "wires": [
+            [
+                "43e183eedac2b1c5"
+            ]
+        ]
+    },
+    {
+        "id": "8463063f761be4e1",
+        "type": "json",
+        "z": "356444956bcd16ce",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 450,
+        "y": 360,
+        "wires": [
+            [
+                "a771f6df506bb33c"
+            ]
+        ]
+    },
+    {
+        "id": "a771f6df506bb33c",
+        "type": "template",
+        "z": "356444956bcd16ce",
+        "name": "",
+        "field": "topic",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "INSERT INTO dust (pm25, pm10, aqi,lat, lon) \nVALUES ({{payload.list.0.components.pm2_5}}, \n{{payload.list.0.components.pm10}}, \n{{payload.list.0.main.aqi}}, \n{{payload.coord.lat}}, \n{{payload.coord.lon}});\n",
+        "output": "str",
+        "x": 600,
+        "y": 360,
+        "wires": [
+            [
+                "cb2988b663f0d7bb"
+            ]
+        ]
+    },
+    {
+        "id": "636c7584198088a9",
+        "type": "mqtt-broker",
+        "name": "CPE Broker",
+        "broker": "iot.cpe.ku.ac.th",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "e85ec3e42761a378",
+        "type": "MySQLdatabase",
+        "name": "",
+        "host": "iot.cpe.ku.ac.th",
+        "port": "3306",
+        "db": "b6610545928",
+        "tz": "+07:00",
+        "charset": "UTF8"
+    }
+]
