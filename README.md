@@ -97,3 +97,5 @@ cd Nang-Rong-Yang-Rao
    http://127.0.0.1:8080/air-quality-api/v1/ui/
    ```
 ---
+## 📄 License
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
