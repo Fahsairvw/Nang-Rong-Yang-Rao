@@ -43,33 +43,51 @@ The system supports interactive frontend visualization and a RESTful API documen
 ### Installation
 Clone the repository
 
-``` git clone https://github.com/Fahsairvw/Nang-Rong-Yang-Rao.git ```
+```bash
+git clone https://github.com/Fahsairvw/Nang-Rong-Yang-Rao.git 
+```
 
 Go to Directory
 
-``` cd Nang-Rong-Yang-Rao ```
+``` bash
+cd Nang-Rong-Yang-Rao 
+```
 
 ### Step how to run the code
 1. User starts the virtual in the virtual env. 
 
-   ``` python -m venv venv ```
+   ``` bash
+    python -m venv venv 
+   ```
 2. Activate the virtual env on Linux and MacOS
 
-   ```source venv/bin/activate ```
+   ```bash
+    source venv/bin/activate 
+   ```
  
     Or, on MS Windows:
 
-   ```.\venv\Scripts\activate```
+   ```bash
+    .\venv\Scripts\activate
+   ```
 3. Install requirement
  
-   ```pip install -r requirements.txt```
+   ```bash
+    pip install -r requirements.txt
+   ```
 4. Run program
    
-   ```python app.py```
+   ```bash
+    python app.py
+   ```
 5. Go to dash board
 
-   ```http://127.0.0.1:8080```
+   ```bash
+    http://127.0.0.1:8080
+   ```
 
 6. Open API specification
 
-   ```http://127.0.0.1:8080/air-quality-api/v1/ui/```
+   ```bash
+   http://127.0.0.1:8080/air-quality-api/v1/ui/
+   ```
