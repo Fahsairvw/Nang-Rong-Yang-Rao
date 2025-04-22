@@ -33,8 +33,11 @@ The system supports interactive frontend visualization and a RESTful API documen
 
 ## 🧰 Prerequisites
 
+Before running the project, make sure you have the following installed:
+
 - **Python** (>= 3.8): [Download Python](https://www.python.org/)
-- **Connexion** library (for OpenAPI integration)
+- **pip** (comes with Python)
+- **DBUtils**: For database connection pooling  
 
 ---
 
