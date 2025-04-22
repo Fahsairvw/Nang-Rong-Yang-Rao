@@ -30,6 +30,20 @@ The system supports interactive frontend visualization and a RESTful API documen
 - Access OpenAPI 3.0-based interactive API documentation.
 
 ---
+## 📋 Database Table Structure: `nangrong`
+
+| Field    | Type     | Description                         |
+|----------|----------|-------------------------------------|
+| `id`     | INT      | Unique identifier                   |
+| `hour`   | DATETIME | Timestamp of the measurement        |
+| `lat`    | INT      | Latitude of the location            |
+| `lon`    | INT      | Longitude of the location           |
+| `sound`  | FLOAT    | Sound level (dB)                    |
+| `pm25`   | FLOAT    | PM2.5 value (μg/m³)                 |
+| `pm10`   | FLOAT    | PM10 value (μg/m³)                  |
+| `aqi`    | INT      | Air Quality Index                   |
+
+---
 
 ## 🧰 Prerequisites
 
