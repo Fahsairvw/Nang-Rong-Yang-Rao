@@ -37,7 +37,9 @@ Before running the project, make sure you have the following installed:
 
 - **Python** (>= 3.8): [Download Python](https://www.python.org/)
 - **pip** (comes with Python)
-- **DBUtils**: For database connection pooling  
+- **DBUtils** (==3.1.0): For database connection pooling  
+- **PyMySQL** (==1.1.1): For MySQL database connection
+- **connexion** (==2.14.2): For building RESTful APIs
 
 ---
 
@@ -94,3 +96,4 @@ cd Nang-Rong-Yang-Rao
    ```bash
    http://127.0.0.1:8080/air-quality-api/v1/ui/
    ```
+---
